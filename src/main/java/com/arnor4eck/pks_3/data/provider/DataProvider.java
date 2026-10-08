@@ -3,6 +3,7 @@ package com.arnor4eck.pks_3.data.provider;
 import com.arnor4eck.pks_3.data.entity.Entity;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -13,12 +14,12 @@ public interface DataProvider<T extends Entity> {
     Collection<T> getAll();
 
     // Получение одной записи по UUID.
-    T get(UUID id);
+    Optional<T> get(UUID id);
 
     // Создание
     void save(T val);
 
-    // Изменение.
+    // Изменение
     void update(T val);
 
     // Архивирование вместо обычного удаления

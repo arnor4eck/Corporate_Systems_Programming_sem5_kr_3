@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import com.jayway.jsonpath.JsonPath;
 
 
@@ -14,7 +13,6 @@ class PlotApiTest extends CrudApiTest {
         String body = input();
         create(path(), body);
         mvc.perform(post(path())
-                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isConflict());
     }
@@ -26,10 +24,10 @@ class PlotApiTest extends CrudApiTest {
         String sectorId = JsonPath.read(body, "$.sectorId");
         String url = "/api/sectors/" + sectorId;
         mvc.perform(delete(url)
-                        .with(csrf()))
+                        )
                 .andExpect(status().isNoContent());
         mvc.perform(delete(url + "/permanent")
-                        .with(csrf()))
+                        )
                 .andExpect(status().isConflict());
     }
 
@@ -52,7 +50,6 @@ class PlotApiTest extends CrudApiTest {
     void rejectsMissingReference() throws Exception {
         String body = input().replaceFirst("\"sectorId\":\"[^\"]+\"", "\"sectorId\":\"" + java.util.UUID.randomUUID() + "\"");
         mvc.perform(post(path())
-                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isNotFound());
     }

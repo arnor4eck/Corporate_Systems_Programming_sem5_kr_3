@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 
 class RequestApiTest extends CrudApiTest {
@@ -34,7 +33,6 @@ class RequestApiTest extends CrudApiTest {
     void rejectsMissingReference() throws Exception {
         String body = input().replaceFirst("\"customerId\":\"[^\"]+\"", "\"customerId\":\"" + java.util.UUID.randomUUID() + "\"");
         mvc.perform(post(path())
-                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isNotFound());
     }

@@ -7,6 +7,6 @@ public record EmployeeInput(
         @NotBlank @Size(max = 150) String fullName,
         @NotNull Role role,
         @NotBlank @Size(max = 50) String login,
-        @NotBlank @Size(max = 255) String passwordHash,
+        @Size(min = 1, max = 255) @Pattern(regexp = "(?s).*\\S.*") String passwordHash,
         @NotNull Boolean active
 ) {}

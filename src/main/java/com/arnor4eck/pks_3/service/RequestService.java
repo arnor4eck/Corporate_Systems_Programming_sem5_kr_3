@@ -5,6 +5,9 @@ import com.arnor4eck.pks_3.data.entity.Customer;
 import com.arnor4eck.pks_3.data.entity.Plot;
 import com.arnor4eck.pks_3.data.entity.Employee;
 import com.arnor4eck.pks_3.data.entity.Status;
+import com.arnor4eck.pks_3.data.entity.PlotStatus;
+import com.arnor4eck.pks_3.data.entity.RequestStatus;
+import java.util.stream.Stream;
 import com.arnor4eck.pks_3.data.repository.RequestRepository;
 import com.arnor4eck.pks_3.data.repository.CustomerRepository;
 import com.arnor4eck.pks_3.data.repository.PlotRepository;
@@ -38,44 +41,80 @@ public class RequestService {
 
     @Transactional
     public RequestResponse create(RequestInput input) {
+        lockPlots(input.plotId());
         Request entity = new Request();
         apply(entity, input);
-        return response(repository.saveAndFlush(entity));
+        repository.saveAndFlush(entity);
+        syncPlot(entity.getPlot());
+        return response(entity);
     }
 
     @Transactional
     public RequestResponse update(UUID id, RequestInput input) {
-        Request entity = find(id);
+        Request entity = mutable(id);
+        Plot previous = entity.getPlot();
+        lockPlots(previous.getId(), input.plotId());
         apply(entity, input);
-        return response(repository.saveAndFlush(entity));
+        repository.flush();
+        syncPlot(previous);
+        if (!previous.getId().equals(entity.getPlot().getId())) syncPlot(entity.getPlot());
+        return response(entity);
     }
 
     @Transactional
     public void archive(UUID id) {
-        find(id).setStatus(Status.ARCHIVE);
+        Request entity = mutable(id);
+        lockPlots(entity.getPlot().getId());
+        entity.setStatus(Status.ARCHIVE);
         repository.flush();
+        syncPlot(entity.getPlot());
     }
 
     @Transactional
     public RequestResponse restore(UUID id) {
         Request entity = archived(id);
+        lockPlots(entity.getPlot().getId());
         entity.setStatus(Status.ACTIVE);
         repository.flush();
+        syncPlot(entity.getPlot());
         return response(entity);
     }
 
     @Transactional
     public void deletePermanently(UUID id) {
-        repository.delete(archived(id));
+        Request entity = archived(id);
+        Plot plot = entity.getPlot();
+        lockPlots(plot.getId());
+        repository.delete(entity);
         repository.flush();
+        syncPlot(plot);
     }
 
     private Request archived(UUID id) {
-        Request entity = find(id);
+        Request entity = mutable(id);
         if (entity.getStatus() != Status.ARCHIVE) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Record must be archived first");
         }
         return entity;
+    }
+
+    private Request mutable(UUID id) {
+        return repository.findForUpdate(id).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Request not found: " + id));
+    }
+
+    private void lockPlots(UUID... ids) {
+        Stream.of(ids).distinct().sorted().forEach(id -> plotRepository.findForUpdate(id).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Plot not found: " + id)));
+    }
+
+    private void syncPlot(Plot plot) {
+        var requests = repository.findAllByPlotIdAndStatus(plot.getId(), Status.ACTIVE);
+        PlotStatus target = requests.stream().anyMatch(r -> r.getRequestStatus() == RequestStatus.COMPLETED)
+                ? PlotStatus.OCCUPIED
+                : requests.stream().anyMatch(r -> r.getRequestStatus() != RequestStatus.REJECTED)
+                ? PlotStatus.RESERVED : PlotStatus.FREE;
+        plot.setPlotStatus(target);
     }
 
     private Request find(UUID id) {

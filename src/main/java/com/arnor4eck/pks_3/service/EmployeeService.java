@@ -29,6 +29,8 @@ public class EmployeeService {
 
     @Transactional
     public EmployeeResponse create(EmployeeInput input) {
+        if (input.passwordHash() == null || input.passwordHash().isBlank())
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password hash is required when creating an employee");
         Employee entity = new Employee();
         apply(entity, input);
         return response(repository.saveAndFlush(entity));
@@ -78,7 +80,7 @@ public class EmployeeService {
         entity.setFullName(input.fullName());
         entity.setRole(input.role());
         entity.setLogin(input.login());
-        entity.setPasswordHash(input.passwordHash());
+        if (input.passwordHash() != null) entity.setPasswordHash(input.passwordHash());
         entity.setActive(input.active());
     }
 

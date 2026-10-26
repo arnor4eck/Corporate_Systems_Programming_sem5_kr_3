@@ -37,4 +37,26 @@ class EmployeeApiTest extends CrudApiTest {
         mvc.perform(get(path()))
                 .andExpect(jsonPath("$[0].passwordHash").doesNotExist());
     }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.arnor4eck.pks_3.data.repository.EmployeeRepository employees;
+
+    @Test
+    void preservesPasswordWhenOmittedAndRejectsMissingPasswordOnCreate() throws Exception {
+        String withoutPassword = input().replace(",\"passwordHash\":\"test-hash\"", "");
+        mvc.perform(post(path()).contentType(MediaType.APPLICATION_JSON).content(withoutPassword))
+                .andExpect(status().isBadRequest());
+        String id = create(path(), input());
+        mvc.perform(put(path() + "/" + id).contentType(MediaType.APPLICATION_JSON)
+                        .content(withoutPassword.replace("Employee", "Changed")))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.fullName").value("Changed"))
+                .andExpect(jsonPath("$.passwordHash").doesNotExist());
+        org.junit.jupiter.api.Assertions.assertEquals("test-hash",
+                employees.findById(java.util.UUID.fromString(id)).orElseThrow().getPasswordHash());
+        mvc.perform(put(path() + "/" + id).contentType(MediaType.APPLICATION_JSON).content(updatedInput()))
+                .andExpect(status().isOk());
+        org.junit.jupiter.api.Assertions.assertEquals("updated-hash",
+                employees.findById(java.util.UUID.fromString(id)).orElseThrow().getPasswordHash());
+    }
+
 }

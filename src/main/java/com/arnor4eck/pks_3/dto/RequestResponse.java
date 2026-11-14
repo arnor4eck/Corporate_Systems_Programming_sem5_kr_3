@@ -1,6 +1,6 @@
 package com.arnor4eck.pks_3.dto;
 
-import com.arnor4eck.pks_3.data.entity.*;
+import com.arnor4eck.pks_3.domain.*;
 import java.util.UUID;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -21,5 +21,7 @@ public record RequestResponse(
         LocalDateTime processedDate,
         BigDecimal totalCost,
         String note,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String code, String title, boolean urgent, Priority priority, UUID sectorId,
+        java.util.List<TagResponse> tags, LocalDateTime updatedAt, Long version
 ) {}

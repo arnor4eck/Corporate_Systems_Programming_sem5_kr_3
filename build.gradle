@@ -24,6 +24,10 @@ ext {
 }
 
 dependencies {
+    implementation 'org.apache.commons:commons-csv:1.14.1'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.security:spring-security-oauth2-jose'
+    testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     implementation 'org.springframework.boot:spring-boot-h2console'

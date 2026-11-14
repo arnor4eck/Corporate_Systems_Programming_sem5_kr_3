@@ -1,6 +1,6 @@
 package com.arnor4eck.pks_3.data;
 
-import com.arnor4eck.pks_3.data.repository.EntityRepository;
+import com.arnor4eck.pks_3.repository.EntityRepository;
 
 import java.util.*;
 

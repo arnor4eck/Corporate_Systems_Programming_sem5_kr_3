@@ -1,8 +1,8 @@
 package com.arnor4eck.pks_3.data;
 
-import com.arnor4eck.pks_3.data.entity.*;
+import com.arnor4eck.pks_3.domain.*;
 import com.arnor4eck.pks_3.data.provider.ConcreteDataProvider;
-import com.arnor4eck.pks_3.data.repository.*;
+import com.arnor4eck.pks_3.repository.*;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

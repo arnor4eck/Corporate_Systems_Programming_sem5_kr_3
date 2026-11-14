@@ -1,6 +1,6 @@
 package com.arnor4eck.pks_3.data.provider;
 
-import com.arnor4eck.pks_3.data.entity.Entity;
+import com.arnor4eck.pks_3.domain.Entity;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -31,5 +31,5 @@ public interface DataProvider<T extends Entity> {
     // Окончательное удаление только администратором
     void delete(UUID id);
 
-    // Проверка version при изменении записи - ???
+    // HTTP version checks are performed by services; JPA @Version protects database updates.
 }

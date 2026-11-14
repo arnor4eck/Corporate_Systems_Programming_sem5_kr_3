@@ -18,12 +18,12 @@ class EmployeeApiTest extends CrudApiTest {
     @Override protected String path() { return "/api/employees"; }
     @Override protected String input() throws Exception {
         return """
-                {"fullName":"Employee","role":"MANAGER","login":"manager","passwordHash":"test-hash","active":true}
+                {"fullName":"Employee","role":"MANAGER","login":"manager","password":"TemporaryPass123!","active":true}
                 """;
     }
     @Override protected String updatedInput() throws Exception {
         return """
-                {"fullName":"Updated","role":"WORKER","login":"worker","passwordHash":"updated-hash","active":false}
+                {"fullName":"Updated","role":"WORKER","login":"worker","password":"UpdatedPassword123!","active":false}
                 """;
     }
     @Override protected String changedField() { return "role"; }

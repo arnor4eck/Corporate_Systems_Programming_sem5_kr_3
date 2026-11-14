@@ -1,7 +1,7 @@
 package com.arnor4eck.pks_3.data.provider;
 
-import com.arnor4eck.pks_3.data.entity.Entity;
-import com.arnor4eck.pks_3.exception.entity.NotArchivedException;
+import com.arnor4eck.pks_3.domain.Entity;
+import com.arnor4eck.pks_3.error.entity.NotArchivedException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.repository.CrudRepository;
 
@@ -11,8 +11,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import static com.arnor4eck.pks_3.data.entity.Status.ACTIVE;
-import static com.arnor4eck.pks_3.data.entity.Status.ARCHIVE;
+import static com.arnor4eck.pks_3.domain.Status.ACTIVE;
+import static com.arnor4eck.pks_3.domain.Status.ARCHIVE;
 
 public class ConcreteDataProvider<T extends Entity> implements DataProvider<T> {
 

@@ -1,8 +1,8 @@
 package com.arnor4eck.pks_3.data;
 
 import com.arnor4eck.pks_3.data.provider.ConcreteDataProvider;
-import com.arnor4eck.pks_3.data.repository.EntityRepository;
-import com.arnor4eck.pks_3.exception.entity.NotArchivedException;
+import com.arnor4eck.pks_3.repository.EntityRepository;
+import com.arnor4eck.pks_3.error.entity.NotArchivedException;
 import org.junit.jupiter.api.*;
 
 import java.util.Collection;
@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static com.arnor4eck.pks_3.data.entity.Status.ACTIVE;
-import static com.arnor4eck.pks_3.data.entity.Status.ARCHIVE;
+import static com.arnor4eck.pks_3.domain.Status.ACTIVE;
+import static com.arnor4eck.pks_3.domain.Status.ARCHIVE;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ConcreteDataProviderTest {

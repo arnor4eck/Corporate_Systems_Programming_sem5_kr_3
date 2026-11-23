@@ -49,8 +49,7 @@ async function main() {
   const imported=await csv('/api/requests/import/apply',text,'UPSERT',preview.previewToken); assert.equal(imported.succeeded,1); assert.equal(imported.results[0].id,request.id);
   const stats=await call('GET','/api/analytics/summary'); assert.ok(stats.requestsByPriority.some(group=>group.key==='URGENT'&&group.count>0));
   const events=await call('GET','/api/admin/audit?entityId='+request.id); assert.ok(events.totalElements>=4);
-  const basic=Buffer.from('verify-admin:'+env.KR3_VERIFY_NEW_PASSWORD).toString('base64');
-  const spec=await fetch(base+'/v3/api-docs',{headers:{Authorization:'Basic '+basic}}); assert.equal(spec.status,200); assert.ok((await spec.json()).paths['/api/requests/bulk']);
+  const spec=await fetch(base+'/v3/api-docs'); assert.equal(spec.status,200); assert.ok((await spec.json()).paths['/api/requests/bulk']);
   const rotated=await call('POST','/api/auth/refresh',{refreshToken:login.refreshToken},200,false);
   await call('GET','/api/auth/me',undefined,401);
   token=rotated.accessToken;

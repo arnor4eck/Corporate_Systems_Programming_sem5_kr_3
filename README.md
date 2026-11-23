@@ -34,7 +34,9 @@ docker compose up -d --wait
 
 ## Первый вход и Swagger
 
-При пустой таблице сотрудников создаётся ADMIN из `ADMIN_LOGIN`/`ADMIN_PASSWORD` в `.env`. Его временный пароль нужно сменить. Пример PowerShell без вывода токенов/паролей:
+Swagger и JSON/YAML OpenAPI открываются без логина и пароля. Для запросов API нужна авторизация через JWT.
+
+При пустой таблице сотрудников создаётся ADMIN из `ADMIN_LOGIN`/`ADMIN_PASSWORD` в `.env`. Для прикладных запросов API временный пароль нужно сменить; это можно сделать прямо в Swagger: выполнить `/api/auth/login`, вставить `accessToken` в **Authorize** без слова `Bearer`, затем вызвать `/api/auth/change-password`. Альтернатива — PowerShell без вывода токенов/паролей:
 
 ```powershell
 $settings = ConvertFrom-StringData (Get-Content .env -Raw)
@@ -44,7 +46,7 @@ $newPassword = [System.Net.NetworkCredential]::new('', (Read-Host 'Новый п
 Invoke-RestMethod "$baseUrl/api/auth/change-password" -Method Post -ContentType 'application/json' -Headers @{Authorization="Bearer $($session.accessToken)"} -Body (@{currentPassword=$settings.ADMIN_PASSWORD; newPassword=$newPassword} | ConvertTo-Json)
 ```
 
-Теперь откройте Swagger. Браузер запросит логин администратора и **новый** пароль через HTTP Basic; этот способ действует только для документации. В Swagger выполните `/api/auth/login` с новым паролем и вставьте `accessToken` в **Authorize**, без слова `Bearer`. Для прикладного API Basic не применяется.
+После смены пароля выполните `/api/auth/login` с новым паролем. Получите новый `accessToken` и вставьте его в **Authorize**, без слова `Bearer`.
 
 Смена пароля отзывает все сессии. При повторном запуске bootstrap не перезаписывает существующие учётные записи. Если в вашей старой базе были фиктивные passwordHash, действующий администратор должен назначить таким сотрудникам временные пароли.
 

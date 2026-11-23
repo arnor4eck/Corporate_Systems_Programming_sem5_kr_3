@@ -11,12 +11,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.core.annotation.Order;
-import com.arnor4eck.pks_3.dto.AuthDtos;
-import com.arnor4eck.pks_3.service.AuthService;
-import org.springframework.security.authentication.*;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import java.util.List;
 
 @Configuration
 public class SecurityConfig {
@@ -25,38 +19,13 @@ public class SecurityConfig {
 
     @Bean
     @Order(1)
-    SecurityFilterChain documentationSecurity(HttpSecurity http, AuthService authService) throws Exception {
-        // Browser-native login is scoped to documentation. API calls still require a JWT.
-        AuthenticationProvider provider = new AuthenticationProvider() {
-            @Override
-            public Authentication authenticate(Authentication authentication) {
-                String login = authentication.getName();
-                String password = authentication.getCredentials().toString();
-                if (login.isBlank() || login.length() > 50 || password.isBlank() || password.length() > 72)
-                    throw new BadCredentialsException("Invalid credentials");
-                try {
-                    var employee = authService.verifyCredentials(new AuthDtos.Login(login, password));
-                    if (employee.isPasswordChangeRequired()) throw new BadCredentialsException("Password change required");
-                    return UsernamePasswordAuthenticationToken.authenticated(employee, null,
-                            List.of(new SimpleGrantedAuthority("ROLE_" + employee.getRole().name())));
-                } catch (org.springframework.web.server.ResponseStatusException exception) {
-                    throw new BadCredentialsException("Invalid credentials");
-                }
-            }
-            @Override
-            public boolean supports(Class<?> type) { return UsernamePasswordAuthenticationToken.class.isAssignableFrom(type); }
-        };
+    SecurityFilterChain documentationSecurity(HttpSecurity http) throws Exception {
+        // Documentation is public. API calls use the separate JWT security chain below.
         return http.securityMatcher("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml")
-                .authenticationProvider(provider)
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .requestCache(cache -> cache.disable())
-                .authorizeHttpRequests(auth -> auth.anyRequest().hasRole("ADMIN"))
-                .httpBasic(basic -> basic.realmName("Cemetery API documentation").authenticationEntryPoint((req, res, ex) -> {
-                    res.setHeader("WWW-Authenticate", "Basic realm=\"Cemetery API documentation\"");
-                    BearerTokenFilter.error(req, res, 401, "Administrator authentication required");
-                }))
-                .exceptionHandling(errors -> errors.accessDeniedHandler((req, res, ex) -> BearerTokenFilter.error(req, res, 403, "Insufficient permissions")))
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
                 .build();
     }
 

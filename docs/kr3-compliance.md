@@ -17,12 +17,12 @@
 | 9. Аналитика | Всего/неархивные/архивные, срочные/обычные заявки, средняя и сумма стоимости, группировки по секторам/статусам/вычисляемому приоритету; дополнительно занятость мест и активность сотрудников |
 | 10. Пользователи | /api/employees и /api/admin/users: страницы, создание, имя/логин/роль/активность, временный пароль и сброс, запрет входа отключённому сотруднику |
 | 11. Аудит | Входы и важные изменения, сотрудник/действие/тип сущности/UUID/время/описание, Correlation ID, только ADMIN, поиск/сортировка/страницы; откатившаяся транзакция не оставляет успешного события |
-| 12. Валидация и ошибки | DTO Bean Validation, UUID/enum/даты/диапазоны, DTO вместо JPA в ответах, общий ProblemDetail для MVC/JWT/Basic, без stack trace, 400/401/403/404/409 |
+| 12. Валидация и ошибки | DTO Bean Validation, UUID/enum/даты/диапазоны, DTO вместо JPA в ответах, общий ProblemDetail для MVC/JWT, без stack trace, 400/401/403/404/409 |
 | REST API | auth, CRUD/архив, bulk, CSV preview/apply/export, notes, sectors, analytics/summary, admin/users, admin/audit; названия сущностей адаптированы к теме |
 | PostgreSQL и Flyway | PostgreSQL — основной runtime; V1–V4, validate, индексы, FK/unique/check, таблицы employees/roles/refresh_sessions/requests/sectors/plots/customers/tags/request_tags/request_comments/audit_events |
 | Структура | controller, service, repository, domain, dto, security, filter, error, config, db/migration |
 | Docker | Multi-stage Dockerfile Java 21, отдельные backend/PostgreSQL, .env, localhost-порт, ожидание pg_isready, healthcheck backend, named volume и обычный down/up без удаления базы |
-| Swagger | /swagger-ui.html; доступ ADMIN; JSON/YAML OpenAPI; описание реальных операций, моделей, ролей, примеров, version и ошибок; JWT Authorize |
+| Swagger | /swagger-ui.html и JSON/YAML OpenAPI доступны без авторизации; описание реальных операций, моделей, ролей, примеров, version и ошибок; JWT Authorize для запросов API |
 | Обязательные тесты | Spring Context; бизнес-правила приоритета/аналитики/целостности; поиск/фильтры; пароли/безопасность; дополнительно CRUD/архив, версии, bulk, метки, комментарии, CSV и аудит |
 
 ## Бизнес-правило приоритета

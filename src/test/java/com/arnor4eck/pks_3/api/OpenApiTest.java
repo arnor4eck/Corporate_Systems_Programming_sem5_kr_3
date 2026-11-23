@@ -28,46 +28,48 @@ class OpenApiTest {
     @Autowired com.arnor4eck.pks_3.repository.RefreshSessionRepository sessions;
 
     @Test
-    void onlyAdministratorCanLoadDocumentation() throws Exception {
-        for (String path : List.of("/swagger-ui.html", "/swagger-ui/index.html", "/v3/api-docs", "/v3/api-docs/swagger-config", "/v3/api-docs.yaml")) {
-            mvc.perform(get(path)).andExpect(status().isUnauthorized());
-            mvc.perform(get(path).with(user("worker").roles("WORKER"))).andExpect(status().isForbidden());
-            mvc.perform(get(path).with(user("manager").roles("MANAGER"))).andExpect(status().isForbidden());
+    void documentationIsPublic() throws Exception {
+        for (String path : List.of("/swagger-ui/index.html", "/v3/api-docs", "/v3/api-docs/swagger-config", "/v3/api-docs.yaml")) {
+            mvc.perform(get(path)).andExpect(status().isOk()).andExpect(header().doesNotExist("WWW-Authenticate"));
+            mvc.perform(get(path).with(user("worker").roles("WORKER"))).andExpect(status().isOk());
+            mvc.perform(get(path).with(user("manager").roles("MANAGER"))).andExpect(status().isOk());
         }
-        mvc.perform(get("/swagger-ui.html").with(user("admin").roles("ADMIN")))
+        mvc.perform(get("/swagger-ui.html"))
                 .andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/swagger-ui/index.html"));
-        mvc.perform(get("/swagger-ui/index.html").with(user("admin").roles("ADMIN")))
+        mvc.perform(get("/swagger-ui/index.html"))
                 .andExpect(status().isOk()).andExpect(content().string(org.hamcrest.Matchers.containsString("Swagger UI")));
     }
 
     @Test
-    void browserLoginUsesExistingAdministratorAndDoesNotCreateRefreshSessions() throws Exception {
+    void publicDocumentationDoesNotCreateSessionsAndApiStillRequiresJwt() throws Exception {
         var employee = new Employee();
         employee.setLogin("docs-admin");
         employee.setFullName("Documentation administrator");
         employee.setRole(Role.ADMIN);
         employee.setPasswordHash(passwords.encode("DocumentationPassword123!"));
-        employee.setPasswordChangeRequired(false);
+        employee.setPasswordChangeRequired(true);
         employees.saveAndFlush(employee);
-        mvc.perform(get("/v3/api-docs").with(httpBasic("docs-admin", "DocumentationPassword123!")))
+        mvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk());
         assertThat(sessions.count()).isZero();
+        mvc.perform(get("/api/employees"))
+                .andExpect(status().isUnauthorized());
         mvc.perform(get("/api/employees").with(httpBasic("docs-admin", "DocumentationPassword123!")))
                 .andExpect(status().isUnauthorized());
-        // Browsers may automatically attach cached documentation credentials on this same origin.
+        // Ignore Basic credentials cached by browsers from before documentation became public.
         mvc.perform(post("/api/auth/login").with(httpBasic("docs-admin", "DocumentationPassword123!"))
                         .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                         .content("{\"login\":\"docs-admin\",\"password\":\"DocumentationPassword123!\"}"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.accessToken").isNotEmpty());
-        employee.setPasswordChangeRequired(true);
-        employees.saveAndFlush(employee);
-        mvc.perform(get("/v3/api-docs").with(httpBasic("docs-admin", "DocumentationPassword123!")))
-                .andExpect(status().isUnauthorized());
+        mvc.perform(get("/swagger-ui/index.html").with(httpBasic("unknown", "wrong-password")))
+                .andExpect(status().isOk());
+        mvc.perform(get("/v3/api-docs").header("Authorization", "Bearer expired-token"))
+                .andExpect(status().isOk());
     }
 
     @Test
     void specificationDescribesRealRoutesSchemasRolesAndJwt() throws Exception {
-        String json = mvc.perform(get("/v3/api-docs").with(user("admin").roles("ADMIN")))
+        String json = mvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.info.title").value("Система управления кладбищем — REST API"))
                 .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.scheme").value("bearer"))
                 .andExpect(jsonPath("$.components.schemas.LoginRequest.properties.password.writeOnly").value(true))

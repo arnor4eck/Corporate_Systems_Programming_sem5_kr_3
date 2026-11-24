@@ -1,6 +1,6 @@
 package com.arnor4eck.pks_3.dto;
 
-import com.arnor4eck.pks_3.data.entity.*;
+import com.arnor4eck.pks_3.domain.*;
 import java.util.UUID;
 
 public record PlotResponse(
@@ -12,5 +12,6 @@ public record PlotResponse(
         PlotStatus plotStatus,
         int lengthCm,
         int widthCm,
-        String coordinates
+        String coordinates,
+        java.time.LocalDateTime updatedAt, Long version
 ) {}

@@ -1,8 +1,8 @@
 package com.arnor4eck.pks_3.service;
 
-import com.arnor4eck.pks_3.data.entity.Customer;
-import com.arnor4eck.pks_3.data.entity.Status;
-import com.arnor4eck.pks_3.data.repository.CustomerRepository;
+import com.arnor4eck.pks_3.domain.Customer;
+import com.arnor4eck.pks_3.domain.Status;
+import com.arnor4eck.pks_3.repository.CustomerRepository;
 import com.arnor4eck.pks_3.dto.CustomerInput;
 import com.arnor4eck.pks_3.dto.CustomerResponse;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +17,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class CustomerService {
+    private final AuditService audit;
     private final CustomerRepository repository;
 
     public List<CustomerResponse> getAll() {
@@ -31,19 +32,25 @@ public class CustomerService {
     public CustomerResponse create(CustomerInput input) {
         Customer entity = new Customer();
         apply(entity, input);
-        return response(repository.saveAndFlush(entity));
+        repository.saveAndFlush(entity);
+        audit.record("CREATE", "customers", entity.getId(), "CREATE Customer");
+        return response(entity);
     }
 
     @Transactional
     public CustomerResponse update(UUID id, CustomerInput input) {
         Customer entity = find(id);
+        Versions.require(entity.getVersion(), input.version());
         apply(entity, input);
-        return response(repository.saveAndFlush(entity));
+        repository.saveAndFlush(entity);
+        audit.record("UPDATE", "customers", entity.getId(), "UPDATE Customer");
+        return response(entity);
     }
 
     @Transactional
     public void archive(UUID id) {
         find(id).setStatus(Status.ARCHIVE);
+        audit.record("ARCHIVE", "customers", id, "Archive Customer");
         repository.flush();
     }
 
@@ -51,6 +58,7 @@ public class CustomerService {
     public CustomerResponse restore(UUID id) {
         Customer entity = archived(id);
         entity.setStatus(Status.ACTIVE);
+        audit.record("RESTORE", "customers", id, "Restore Customer");
         repository.flush();
         return response(entity);
     }
@@ -58,6 +66,7 @@ public class CustomerService {
     @Transactional
     public void deletePermanently(UUID id) {
         repository.delete(archived(id));
+        audit.record("DELETE", "customers", id, "Delete Customer");
         repository.flush();
     }
 
@@ -80,7 +89,7 @@ public class CustomerService {
         entity.setEmail(input.email());
     }
 
-    private CustomerResponse response(Customer e) {
-        return new CustomerResponse(e.getId(), e.getStatus(), e.getFullName(), e.getPhone(), e.getEmail(), e.getCreatedAt());
+    CustomerResponse response(Customer e) {
+        return new CustomerResponse(e.getId(), e.getStatus(), e.getFullName(), e.getPhone(), e.getEmail(), e.getCreatedAt(), e.getUpdatedAt(), e.getVersion());
     }
 }

@@ -1,10 +1,10 @@
 package com.arnor4eck.pks_3.service;
 
-import com.arnor4eck.pks_3.data.entity.Plot;
-import com.arnor4eck.pks_3.data.entity.Sector;
-import com.arnor4eck.pks_3.data.entity.Status;
-import com.arnor4eck.pks_3.data.repository.PlotRepository;
-import com.arnor4eck.pks_3.data.repository.SectorRepository;
+import com.arnor4eck.pks_3.domain.Plot;
+import com.arnor4eck.pks_3.domain.Sector;
+import com.arnor4eck.pks_3.domain.Status;
+import com.arnor4eck.pks_3.repository.PlotRepository;
+import com.arnor4eck.pks_3.repository.SectorRepository;
 import com.arnor4eck.pks_3.dto.PlotInput;
 import com.arnor4eck.pks_3.dto.PlotResponse;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +19,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class PlotService {
+    private final com.arnor4eck.pks_3.repository.RequestRepository requests;
+    private final AuditService audit;
     private final PlotRepository repository;
     private final SectorRepository sectorRepository;
 
@@ -34,19 +36,25 @@ public class PlotService {
     public PlotResponse create(PlotInput input) {
         Plot entity = new Plot();
         apply(entity, input);
-        return response(repository.saveAndFlush(entity));
+        repository.saveAndFlush(entity);
+        audit.record("CREATE", "plots", entity.getId(), "CREATE Plot");
+        return response(entity);
     }
 
     @Transactional
     public PlotResponse update(UUID id, PlotInput input) {
         Plot entity = find(id);
+        Versions.require(entity.getVersion(), input.version());
         apply(entity, input);
-        return response(repository.saveAndFlush(entity));
+        repository.saveAndFlush(entity);
+        audit.record("UPDATE", "plots", entity.getId(), "UPDATE Plot");
+        return response(entity);
     }
 
     @Transactional
     public void archive(UUID id) {
         find(id).setStatus(Status.ARCHIVE);
+        audit.record("ARCHIVE", "plots", id, "Archive Plot");
         repository.flush();
     }
 
@@ -54,6 +62,7 @@ public class PlotService {
     public PlotResponse restore(UUID id) {
         Plot entity = archived(id);
         entity.setStatus(Status.ACTIVE);
+        audit.record("RESTORE", "plots", id, "Restore Plot");
         repository.flush();
         return response(entity);
     }
@@ -61,6 +70,7 @@ public class PlotService {
     @Transactional
     public void deletePermanently(UUID id) {
         repository.delete(archived(id));
+        audit.record("DELETE", "plots", id, "Delete Plot");
         repository.flush();
     }
 
@@ -83,6 +93,8 @@ public class PlotService {
     }
 
     private void apply(Plot entity, PlotInput input) {
+        if (entity.getId() != null && !entity.getSector().getId().equals(input.sectorId()) && requests.existsByPlotId(entity.getId()))
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "A plot referenced by requests cannot be moved to another sector");
         entity.setSector(findSector(input.sectorId()));
         entity.setRowNumber(input.rowNumber());
         entity.setPlotNumber(input.plotNumber());
@@ -92,7 +104,7 @@ public class PlotService {
         entity.setCoordinates(input.coordinates());
     }
 
-    private PlotResponse response(Plot e) {
-        return new PlotResponse(e.getId(), e.getStatus(), e.getSector().getId(), e.getRowNumber(), e.getPlotNumber(), e.getPlotStatus(), e.getLengthCm(), e.getWidthCm(), e.getCoordinates());
+    PlotResponse response(Plot e) {
+        return new PlotResponse(e.getId(), e.getStatus(), e.getSector().getId(), e.getRowNumber(), e.getPlotNumber(), e.getPlotStatus(), e.getLengthCm(), e.getWidthCm(), e.getCoordinates(), e.getUpdatedAt(), e.getVersion());
     }
 }

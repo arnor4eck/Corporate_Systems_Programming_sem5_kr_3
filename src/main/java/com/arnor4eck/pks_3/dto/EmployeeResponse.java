@@ -1,6 +1,6 @@
 package com.arnor4eck.pks_3.dto;
 
-import com.arnor4eck.pks_3.data.entity.*;
+import com.arnor4eck.pks_3.domain.*;
 import java.util.UUID;
 import java.time.LocalDateTime;
 
@@ -11,5 +11,6 @@ public record EmployeeResponse(
         Role role,
         String login,
         boolean active,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        java.time.LocalDateTime updatedAt, Long version
 ) {}

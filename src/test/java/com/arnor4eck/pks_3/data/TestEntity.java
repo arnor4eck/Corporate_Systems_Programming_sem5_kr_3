@@ -1,7 +1,7 @@
 package com.arnor4eck.pks_3.data;
 
-import com.arnor4eck.pks_3.data.entity.Entity;
-import com.arnor4eck.pks_3.data.entity.Status;
+import com.arnor4eck.pks_3.domain.Entity;
+import com.arnor4eck.pks_3.domain.Status;
 
 import java.util.UUID;
 

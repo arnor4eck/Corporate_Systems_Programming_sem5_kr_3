@@ -1,0 +1,47 @@
+CREATE TABLE roles (name VARCHAR(20) PRIMARY KEY);
+INSERT INTO roles(name) VALUES ('ADMIN'), ('MANAGER'), ('WORKER');
+ALTER TABLE employees ADD CONSTRAINT fk_employee_role FOREIGN KEY(role) REFERENCES roles(name);
+
+ALTER TABLE customers ADD COLUMN version BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE employees ADD COLUMN version BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE sectors ADD COLUMN version BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE plots ADD COLUMN version BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE requests ADD COLUMN version BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE customers ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE employees ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE sectors ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE plots ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE requests ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE sectors ADD COLUMN enabled BOOLEAN NOT NULL DEFAULT TRUE;
+
+ALTER TABLE requests ADD COLUMN code VARCHAR(50);
+UPDATE requests SET code = CONCAT('REQ-', CAST(id AS VARCHAR(36)));
+ALTER TABLE requests ALTER COLUMN code SET NOT NULL;
+ALTER TABLE requests ADD CONSTRAINT uk_request_code UNIQUE(code);
+ALTER TABLE requests ADD COLUMN title VARCHAR(150) NOT NULL DEFAULT 'Заявка на захоронение или бронирование';
+ALTER TABLE requests ADD COLUMN urgent BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE requests ADD COLUMN sector_id UUID;
+UPDATE requests SET sector_id = (SELECT p.sector_id FROM plots p WHERE p.id = requests.plot_id);
+ALTER TABLE requests ALTER COLUMN sector_id SET NOT NULL;
+ALTER TABLE requests ADD CONSTRAINT fk_request_sector FOREIGN KEY(sector_id) REFERENCES sectors(id);
+CREATE INDEX idx_request_sector ON requests(sector_id);
+CREATE INDEX idx_request_urgent_status ON requests(urgent, status);
+
+CREATE TABLE tags (id UUID PRIMARY KEY, name VARCHAR(50) NOT NULL UNIQUE);
+CREATE TABLE request_tags (
+    request_id UUID NOT NULL REFERENCES requests(id) ON DELETE CASCADE,
+    tag_id UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+    PRIMARY KEY(request_id, tag_id)
+);
+CREATE INDEX idx_request_tags_tag ON request_tags(tag_id);
+CREATE TABLE request_comments (
+    id UUID PRIMARY KEY,
+    request_id UUID NOT NULL REFERENCES requests(id) ON DELETE CASCADE,
+    author_id UUID NOT NULL REFERENCES employees(id) ON DELETE RESTRICT,
+    content VARCHAR(4000) NOT NULL,
+    pinned BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    version BIGINT NOT NULL DEFAULT 0
+);
+CREATE INDEX idx_request_comment_time ON request_comments(request_id, created_at);

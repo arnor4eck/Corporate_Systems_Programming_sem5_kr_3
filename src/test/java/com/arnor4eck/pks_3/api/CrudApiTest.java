@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
+@org.springframework.security.test.context.support.WithMockUser(roles = "ADMIN")
 @AutoConfigureMockMvc
 @Sql(statements = {"DELETE FROM requests", "DELETE FROM plots", "DELETE FROM employees",
         "DELETE FROM customers", "DELETE FROM sectors"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
@@ -39,7 +40,9 @@ abstract class CrudApiTest {
         mvc.perform(get(path())).andExpect(status().isOk()).andExpect(jsonPath("$[*].id").value(org.hamcrest.Matchers.hasItem(id)));
         mvc.perform(delete(url + "/permanent")).andExpect(status().isConflict());
         mvc.perform(post(url + "/restore")).andExpect(status().isConflict());
-        mvc.perform(put(url).contentType(MediaType.APPLICATION_JSON).content(updatedInput()))
+        Number version = JsonPath.read(mvc.perform(get(url)).andReturn().getResponse().getContentAsString(), "$.version");
+        String updated = updatedInput().strip().replaceFirst("\\{", "{\"version\":" + version + ",");
+        mvc.perform(put(url).contentType(MediaType.APPLICATION_JSON).content(updated))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.id").value(id))
                 .andExpect(jsonPath("$." + changedField()).value(changedValue()));
         mvc.perform(delete(url)).andExpect(status().isNoContent());

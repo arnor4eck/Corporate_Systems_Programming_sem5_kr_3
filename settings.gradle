@@ -1,1 +1,9 @@
+pluginManagement {
+    repositories {
+        // Resolve Spring plugins directly without depending on Plugin Portal availability.
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
 rootProject.name = 'pks_3'
